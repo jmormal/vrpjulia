@@ -72,7 +72,7 @@ function read_data(filename)
     for i in 1:length(order)
         push!(OrderedEdges, D1[order[i]])
     end
-
+    sort!(S)
     routes= Route[]
     cost= 0
     DictNodeToRoute= Dict{Int64, Int64}()
@@ -83,7 +83,7 @@ function read_data(filename)
 
     end
     solution= Solution(0, routes, cost )
-    return solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes
+    return solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S, D ,routes, cost
 
 end
 
@@ -121,19 +121,20 @@ end
 
 
 
-function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes)
+function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D)
+
     vehCap= 100
 
     for k in 1:length(OrderedEdges)
-
+    #     # select the next edge from the list
     #     ijEdge = savingsList.pop(0) # select the next edge from the list
          iNode = nodes[OrderedEdges[k][1]]
          jNode = nodes[OrderedEdges[k][2]]
 
+
     #     # determine the routes associated with each node
         iRoute = solution.routes[DictNodeToRoute[OrderedEdges[k][1]]]
         jRoute = solution.routes[DictNodeToRoute[OrderedEdges[k][2]]]
-
     #     # check if merge is possible
         isMergeFeasible = checkMergingConditions(iNode, jNode, iRoute, jRoute,vehCap)
     #     # if all necessary conditions are satisfied, merge
@@ -162,45 +163,31 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
             if length(jRoute.nodes) > 1
                jNode.isInterior = true
             end
+
+
+            for i in 1:length(jRoute.nodes)
+
+                DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
+
+            end
+
             iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
             jRoute.nodes= []
             iRoute.demand += jRoute.demand
-            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID] - DCostNodes[jNode.ID]
-
-            #         # iRoute will contain either edge (depot, i) or edge (i, depot)
-            #         iEdge = getDepotEdge(iRoute, iNode) # iEdge is either (0,i) or (i,0)
-            #         # remove iEdge from iRoute and update iRoute cost
-            #         iRoute.edges.remove(iEdge)
-            #         iRoute.cost -= iEdge.cost
-            #         # if there are multiple edges in iRoute, then i will be interior
-            #         if len(iRoute.edges) > 1: iNode.isInterior = True
-            #         # if new iRoute does not start at 0 it must be reversed
-
-
-            # Change the route of the nodes in jRoute
-            for i in 1:length(jRoute.nodes)
-                println("i: ", i)
-                println("jRoute.nodes[i].ID: ", jRoute.nodes[i].ID)
-                println("iRoute.ID: ", iRoute.ID)
-                println("DictNodeToRoute[jRoute.nodes[i].ID]: ", DictNodeToRoute[jRoute.nodes[i].ID])
-                DictNodeToRoute[jRoute.nodes[i].ID] = iRoute.ID
-            end
+            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
 
 
 
 
 
+        end
     end
-end
-solution.cost= 0
-for i in 1:length(solution.routes)
-    if length(solution.routes[i].nodes) > 0
-        println("Route ", i, ": ", solution.routes[i].nodes, " cost: ", solution.routes[i].cost, " demand: ", solution.routes[i].demand)
-
-        solution.cost += solution.routes[i].cost
+    solution.cost= 0
+    for i in 1:length(solution.routes)
+        if length(solution.routes[i].nodes) > 0
+            solution.cost += solution.routes[i].cost
+        end
     end
-end
-println("solution cost: ", solution.cost)
 
 end
 
@@ -208,12 +195,17 @@ end
 
 function main()
 
-#     instanceName = "A-n80-k10" # name of the instance
-    instanceName = "A-n32-k5" # name of the instance
+    instanceName = "A-n80-k10" # name of the instance
+#     instanceName = "A-n32-k5" # name of the instance
 
     fileName = "data/" * instanceName * "_input_nodes.txt"
-    solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes = read_data(fileName)
-    CWS(solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes)
+    solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S ,D ,routes, cost = read_data(fileName)
+    for _ in 1:50000
+        # Make a copy of the solution
+        solution=Solution(0,  routes, cost )
+
+        CWS(solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D)
+   end
 
 end
 
