@@ -28,4 +28,5 @@ mutable struct Solution
     ID::Int16
     routes::Vector{Route}
     cost::Float64
+    nodes::Vector{Node}
 end

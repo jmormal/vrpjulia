@@ -8,8 +8,27 @@ include("./vrpobjects.jl")
 using Distances
 using BenchmarkTools
 using Debugger
+using Distributions
+
 using ProfileView
+using Base.Threads
+using Random
 using LoopVectorization
+function shuffled_list(n::Int64)
+    beta=10
+    c_list=collect(1:n)
+    o_list=Vector{Int64}(undef,n)
+    k=0
+    index1=rand(Geometric(0.2),length(c_list))
+
+    for j in 1:length(c_list)
+        k+=1
+        index=index1[k] % length(c_list)+1
+        o_list[k]=c_list[index]
+        deleteat!(c_list,index)
+    end
+    return o_list
+end
 function read_data(filename)
 
 # with open(fileName) as instance:g
@@ -84,7 +103,7 @@ function read_data(filename)
         nodes[k].route=k-1
 
     end
-    solution= Solution(0, routes, cost )
+    solution= Solution(0, routes, cost ,nodes)
     return solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S, D ,routes, cost
 
 end
@@ -125,13 +144,13 @@ end
 
 function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D)
     vehCap= 100
-    for k in 1:length(OrderedEdges)
+    for k in shuffled_list(length(OrderedEdges))
     #     # select the next edge from the list
     #     ijEdge = savingsList.pop(0) # select the next edge from the list
-         i1=OrderedEdges[k][1]
-         i2=OrderedEdges[k][2]
-         iNode = nodes[i1]
-         jNode = nodes[i2]
+         @inbounds i1=OrderedEdges[k][1]
+         @inbounds i2=OrderedEdges[k][2]
+         @inbounds iNode = nodes[i1]
+         @inbounds jNode = nodes[i2]
 
         iNR1=iNode.route
         iNR2=jNode.route
@@ -195,27 +214,207 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
 end
 
 
+function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D, best_sol)
+    vehCap= 100
+
+    for k in shuffled_list(length(OrderedEdges))
+#         k+=rand((-5:5))
+#         if k<0:
+#             k=1
+#         end
+#         if k>length(OrderedEdges)
+#             k=length(OrderedEdges)
+#         end
+    #     # select the next edge from the list
+    #     ijEdge = savingsList.pop(0) # select the next edge from the list
+         @inbounds i1=OrderedEdges[k][1]
+         @inbounds i2=OrderedEdges[k][2]
+         @inbounds iNode = nodes[i1]
+         @inbounds jNode = nodes[i2]
+
+        iNR1=iNode.route
+        iNR2=jNode.route
+    #     # determine the routes associated with each node
+        @inbounds iRoute = solution.routes[iNR1]
+        @inbounds jRoute = solution.routes[iNR2]
+    #     # check if merge is possible
+        isMergeFeasible = checkMergingConditions(iNode, jNode, iRoute, jRoute,vehCap)
+    #     # if all necessary conditions are satisfied, merge
+        if isMergeFeasible == true
+
+            # deterimine if iNode is at the beginning or end of iRoute
+            iNodeBTrue = iRoute.nodes[1].ID == iNode.ID
+            # determine if jNode is at the beginning or end of jRoute
+            jNodeBTrue = jRoute.nodes[1].ID == jNode.ID
+
+            if iNodeBTrue==jNodeBTrue
+                if iNodeBTrue==true
+                    reverse!(iRoute.nodes)
+                else
+                    reverse!(jRoute.nodes)
+                end
+            else
+                if iNodeBTrue==true
+                    reverse!(iRoute.nodes)
+                    reverse!(jRoute.nodes)
+                end
+            end
+            if length(iRoute.nodes) > 1
+               iNode.isInterior = true
+            end
+            if length(jRoute.nodes) > 1
+               jNode.isInterior = true
+            end
+
+
+            for n in jRoute.nodes
+                n.route= iNode.route
+#                 DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
+
+            end
+
+            iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
+            jRoute.nodes= []
+            iRoute.demand += jRoute.demand
+            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
+
+
+
+
+        end
+    end
+    solution.cost= 0
+
+    for i in 1:length(solution.routes)
+        if length(solution.routes[i].nodes) > 0
+            solution.cost += solution.routes[i].cost
+        end
+    end
+    if solution.cost<best_sol.cost
+        best_sol=solution
+    end
+
+    return best_sol
+
+end
+
+function CWS1(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D)
+    vehCap= 100
+    k=1
+    while length(OrderedEdges)!=0
+    #     # select the next edge from the list
+    #     ijEdge = savingsList.pop(0) # select the next edge from the list
+         @inbounds i1=OrderedEdges[k][1]
+         @inbounds i2=OrderedEdges[k][2]
+         @inbounds iNode = nodes[i1]
+         @inbounds jNode = nodes[i2]
+
+        iNR1=iNode.route
+        iNR2=jNode.route
+    #     # determine the routes associated with each node
+        @inbounds iRoute = solution.routes[iNR1]
+        @inbounds jRoute = solution.routes[iNR2]
+    #     # check if merge is possible
+        isMergeFeasible = checkMergingConditions(iNode, jNode, iRoute, jRoute,vehCap)
+    #     # if all necessary conditions are satisfied, merge
+        if isMergeFeasible == true
+
+            # deterimine if iNode is at the beginning or end of iRoute
+            iNodeBTrue = iRoute.nodes[1].ID == iNode.ID
+            # determine if jNode is at the beginning or end of jRoute
+            jNodeBTrue = jRoute.nodes[1].ID == jNode.ID
+
+            if iNodeBTrue==jNodeBTrue
+                if iNodeBTrue==true
+                    reverse!(iRoute.nodes)
+                else
+                    reverse!(jRoute.nodes)
+                end
+            else
+                if iNodeBTrue==true
+                    reverse!(iRoute.nodes)
+                    reverse!(jRoute.nodes)
+                end
+            end
+            if length(iRoute.nodes) > 1
+               iNode.isInterior = true
+            end
+            if length(jRoute.nodes) > 1
+               jNode.isInterior = true
+            end
+
+
+            for n in jRoute.nodes
+                n.route= iNode.route
+#                 DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
+
+            end
+
+            iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
+            jRoute.nodes= []
+            iRoute.demand += jRoute.demand
+            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
+
+
+
+
+        end
+        popfirst!(OrderedEdges)
+
+    end
+    solution.cost= 0
+    for i in 1:length(solution.routes)
+        if length(solution.routes[i].nodes) > 0
+            solution.cost += solution.routes[i].cost
+        end
+    end
+
+end
+
+
 
 function main()
 
-    instanceName = "A-n80-k10" # name of the instance
-#     instanceName = "A-n32-k5" # name of the instance
+#     instanceName = "A-n80-k10" # name of the instance
+    instanceName = "A-n32-k5" # name of the instance
 
     fileName = "data/" * instanceName * "_input_nodes.txt"
     solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S ,D ,routes, cost = read_data(fileName)
+    num_routes=10000
+    Edges=Vector{typeof(OrderedEdges)}(undef, 2000000)
 
-    num_routes=100000*4
     Solutions=Vector{Solution}(undef, num_routes)
 
     for k in 1:num_routes
-        Solutions[k]=Solution(0,  routes, cost )
+        Solutions[k]=deepcopy(Solution(0,  routes, cost,nodes ))
+
     end
+
+#  for k in 1:num_routes
+#         Solutions[k]=Solution(0,  deepcopy(routes), cost,deepcopy(nodes ))
+#
+#     end
+
+    best_sol=Solutions[1]
+
     for k in 1:num_routes
-        # Make a copy of the solution
 
-
-        CWS(Solutions[k], nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D)
+        best_sol=CWS(Solutions[k], Solutions[k].nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D,best_sol
+        )
    end
+   println(best_sol.cost)
+
+#     best_sols=[Solutions[l] for l in 1:Threads.nthreads()]
+#     thread_count=[0 for l in 1:Threads.nthreads()]
+#     @threads for k in 1:num_routes
+#
+#     best_sols[Threads.threadid()]=CWS(Solutions[k], Solutions[k].nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D,best_sols[Threads.threadid()]
+#     )
+#     thread_count[Threads.threadid()]+=1
+#     end
+
+#    println([b.cost for b in best_sols])
+#    println(thread_count)
 
 end
 
