@@ -5,13 +5,14 @@ vrp_heuristic:
 - Date: 2023-03-30
 =#
 include("./vrpobjects.jl")
-println("vrp_heuristic.jl")
 using Distances
 using BenchmarkTools
 using Debugger
+using ProfileView
+using LoopVectorization
 function read_data(filename)
 
-# with open(fileName) as instance:
+# with open(fileName) as instance:g
 #     i = 0
 #     nodes = []
 #     for line in instance:
@@ -25,7 +26,7 @@ function read_data(filename)
     i = 1
     for line in eachline(filename)
         data = [parse(Float32, x) for x in split(line)]
-        aNode = Node(i, data[1], data[2], data[3], false)
+        aNode = Node(i, data[1], data[2], data[3], false, 0)
         push!(nodes, aNode)
         i += 1
     end
@@ -80,6 +81,7 @@ function read_data(filename)
         cost += D[1,k]*2
         push!(routes, Route(k, D[1,k]*2, [nodes[k]], nodes[k].demand))
         DictNodeToRoute[nodes[k].ID] = k-1
+        nodes[k].route=k-1
 
     end
     solution= Solution(0, routes, cost )
@@ -122,19 +124,20 @@ end
 
 
 function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D)
-
     vehCap= 100
-
     for k in 1:length(OrderedEdges)
     #     # select the next edge from the list
     #     ijEdge = savingsList.pop(0) # select the next edge from the list
-         iNode = nodes[OrderedEdges[k][1]]
-         jNode = nodes[OrderedEdges[k][2]]
+         i1=OrderedEdges[k][1]
+         i2=OrderedEdges[k][2]
+         iNode = nodes[i1]
+         jNode = nodes[i2]
 
-
+        iNR1=iNode.route
+        iNR2=jNode.route
     #     # determine the routes associated with each node
-        iRoute = solution.routes[DictNodeToRoute[OrderedEdges[k][1]]]
-        jRoute = solution.routes[DictNodeToRoute[OrderedEdges[k][2]]]
+        @inbounds iRoute = solution.routes[iNR1]
+        @inbounds jRoute = solution.routes[iNR2]
     #     # check if merge is possible
         isMergeFeasible = checkMergingConditions(iNode, jNode, iRoute, jRoute,vehCap)
     #     # if all necessary conditions are satisfied, merge
@@ -165,9 +168,9 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
             end
 
 
-            for i in 1:length(jRoute.nodes)
-
-                DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
+            for n in jRoute.nodes
+                n.route= iNode.route
+#                 DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
 
             end
 
@@ -200,17 +203,25 @@ function main()
 
     fileName = "data/" * instanceName * "_input_nodes.txt"
     solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S ,D ,routes, cost = read_data(fileName)
-    for _ in 1:50000
-        # Make a copy of the solution
-        solution=Solution(0,  routes, cost )
 
-        CWS(solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D)
+    num_routes=100000*4
+    Solutions=Vector{Solution}(undef, num_routes)
+
+    for k in 1:num_routes
+        Solutions[k]=Solution(0,  routes, cost )
+    end
+    for k in 1:num_routes
+        # Make a copy of the solution
+
+
+        CWS(Solutions[k], nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S,D)
    end
 
 end
 
-
 @time main()
+@profview main()
+readline()
 # b=@benchmark main() seconds=1 time_tolerance=0.01 gctrial=true samples=1000 evals=1
 #
 # println("Benchmarking vrp_heuristic.jl")
@@ -219,9 +230,6 @@ end
 # # show the minimum time
 # println("BenchmarkTools.Trial minimum time: ")
 # println(minimum(b.times))
-# # show the median time
-# println("BenchmarkTools.Trial median time: ")
-# println(b.times[round(Int, length(b.times)/2)])
 # # show the maximum time
 # println("BenchmarkTools.Trial maximum time: ")
 # println(maximum(b.times), " arg ", argmax(b.times)/length(b.times))

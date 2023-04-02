@@ -12,6 +12,7 @@ mutable struct Node
     y::Float64
     demand::Float64
     isInterior::Bool
+    route::Int16
 end
 
 
