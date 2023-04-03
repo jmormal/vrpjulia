@@ -14,37 +14,38 @@ using ProfileView
 using Base.Threads
 using Random
 using LoopVectorization
-# function shuffled_list(n::Int64)
-#     beta=10
-#     c_list=collect(1:n)
-#     o_list=Vector{Int64}(undef,n)
-#     k=0
-#     index1=rand(Geometric(0.2),length(c_list))
-#
-#     for j in 1:length(c_list)
-#         k+=1
-#         index=index1[k] % length(c_list)+1
-#         o_list[k]=c_list[index]
-#         deleteat!(c_list,index)
-#     end
-#     return o_list
-# end
-function shuffled_list_knuth(n::Int64)
+function shuffled_list(n::Int64, index1)
+    beta=10
+    c_list=collect(1:n)
+    o_list=Vector{Int64}(undef,n)
+    k=rand(1:length(index1))
+    k1=0
+    for j in 1:length(c_list)
+        k+=1
+        k1+=1
+        index=index1[k%length(index1)+1] % n+1
+        o_list[k1]=c_list[index]
+        deleteat!(c_list,index)
+    end
+    return o_list
+end
+function shuffled_list_knuth(n::Int64, index1)
     beta=10
     c_list=collect(1:n)
     k=0
-    index1=rand(Geometric(0.8), n)
+    k1=rand(1:length(index1))
 
-    for j in 1:length(c_list)
+    for j in 1:n
 
         k+=1
-        index=index1[k] % (length(c_list)-k+1)+1
+        k1+=1
+        @inbounds index=(index1[k1%length(index1)+1]) % (n-k+1)+k
         @inbounds c_list[k],c_list[index]=c_list[index],c_list[k]
     end
     return c_list
 end
 
-function knuth_shuffle_geometric(n::Int)
+#= function knuth_shuffle_geometric(n::Int)
     a = collect(1:n)
     for i in 1:n
         j = i + rand(Geometric(0.2))
@@ -55,7 +56,7 @@ function knuth_shuffle_geometric(n::Int)
     end
     return a
 end
-
+ =#
 function read_data(filename)
 
 # with open(fileName) as instance:g
@@ -171,10 +172,10 @@ end
 
 
 
-function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D, best_sol)
+function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D, best_sol,index1)
     vehCap= 100
 
-    for k in shuffled_list_knuth(length(OrderedEdges))
+    for k in shuffled_list_knuth(length(OrderedEdges),index1)
 #         k+=rand((-5:5))
 #         if k<0:
 #             k=1
@@ -229,9 +230,14 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
 #                 DictNodeToRoute[jRoute.nodes[i].ID] = DictNodeToRoute[iRoute.nodes[1].ID]
 
             end
+            for node in jRoute.nodes
+                push!(iRoute.nodes, node)    
+                # deleteat!(jRoute.nodes,node)
+            end
 
-            iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
-            jRoute.nodes= []
+            # push!(iRoute.nodes, [node for node in jRoute.nodes])
+            # iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
+            empty!(jRoute.nodes)
             iRoute.demand += jRoute.demand
             iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
 
@@ -310,7 +316,7 @@ function CWS1(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToR
             iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
             jRoute.nodes= []
             iRoute.demand += jRoute.demand
-            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
+            @inbounds iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
 
 
 
@@ -321,8 +327,8 @@ function CWS1(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToR
     end
     solution.cost= 0
     for i in 1:length(solution.routes)
-        if length(solution.routes[i].nodes) > 0
-            solution.cost += solution.routes[i].cost
+        @inbounds if length(solution.routes[i].nodes) > 0
+            @inbounds solution.cost += solution.routes[i].cost
         end
     end
 
@@ -330,13 +336,13 @@ end
 
 
 
-function main(instanceName)
+function main(instanceName, index1)
 
 #     instanceName = "A-n80-k10" # name of the instance
 
     fileName = "data/" * instanceName
     solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S ,D ,routes, cost = read_data(fileName)
-    num_routes=10000*3*4
+    num_routes=10000*3*4*10
     Edges=Vector{typeof(OrderedEdges)}(undef, 2000000)
 
     Solutions=Vector{Solution}(undef, num_routes)
@@ -354,12 +360,13 @@ function main(instanceName)
     for k in 1:num_routes
 
         best_sol_cost=CWS(solution, solution.nodes, OrderedEdges,
-         DictNodeToRoute, DCostNodes,S,D,best_sol_cost  )
+         DictNodeToRoute, DCostNodes,S,D,best_sol_cost  , index1)
 
          for node in solution.nodes[2:end]
             node.isInterior=false
             node.route=node.ID-1
-            solution.routes[node.route].nodes=Node[node]
+            empty!(solution.routes[node.route].nodes)
+            push!(solution.routes[node.route].nodes,node)
             solution.routes[node.route].demand=node.demand
             solution.routes[node.route].cost=2*D[1,node.ID]
             DictNodeToRoute[node.ID] = node.ID-1
@@ -402,32 +409,36 @@ function main(instanceName)
 #    end
 #    println(best_sol_cost)
 end
+index1=rand(Geometric(0.3),100000)
+# println(index1)
+for filename in filter(x -> occursin(r"\.txt$", x), readdir("data"))[6:15]
+    
 
-for filename in filter(x -> occursin(r"\.txt$", x), readdir("data"))[1:1]
-    println(filename)
-       @time main(filename)
+    # println(filename)
+    #    @time main(filename,index1)
 
-   @profview main(filename)
+   @profview main(filename,index1)
     readline()
+#     #
+#     @time main()
+#      main()
+#     readline()
+    # b=@benchmark main($filename,$index1)  time_tolerance=0.01 gctrial=true samples=500 evals=1
+    
+    # println("Benchmarking vrp_heuristic.jl")
+    # println("BenchmarkTools.Trial: ")
+    # show(b)
+    # # show the minimum time
+    # println("BenchmarkTools.Trial minimum time: ")
+    # println(minimum(b.times))
+    # # show the maximum time
+    # println("BenchmarkTools.Trial maximum time: ")
+    # println(maximum(b.times), " arg ", argmax(b.times)/length(b.times))
+    # # show the mean time
+    # println("BenchmarkTools.Trial mean time: ")
+    # println(mean(b.times))
+    # # show the standard deviation
+# #
 end
 
-#
-# @time main()
-#  main()
-# readline()
-# b=@benchmark main() seconds=1 time_tolerance=0.01 gctrial=true samples=1000 evals=1
-#
-# println("Benchmarking vrp_heuristic.jl")
-# println("BenchmarkTools.Trial: ")
-# show(b)
-# # show the minimum time
-# println("BenchmarkTools.Trial minimum time: ")
-# println(minimum(b.times))
-# # show the maximum time
-# println("BenchmarkTools.Trial maximum time: ")
-# println(maximum(b.times), " arg ", argmax(b.times)/length(b.times))
-# # show the mean time
-# println("BenchmarkTools.Trial mean time: ")
-# println(mean(b.times))
-# # show the standard deviation
-# #
+
