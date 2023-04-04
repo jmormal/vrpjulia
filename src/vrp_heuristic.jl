@@ -91,11 +91,7 @@ function read_data(filename)
 
 #     DCostNodes= Dict{Int64,Float64}( nodes[i].ID => D[1,i] for i in 2:length(nodes))
 #     DCostNodes= Dict{Int64,Float64}()
-    DCostNodes= Vector{Float64}()
-    for i in 2:length(nodes)
-        push!(DCostNodes, D[1,i])
-    end
-    DCostNodes=Tuple(DCostNodes)
+    DCostNodes= Dict{Int64,Float64}(nodes[i].ID => D[1,i] for i = 2:length(nodes))
 #     for i in 2:length(nodes)
 #
 #     end
@@ -244,7 +240,7 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
             # iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
             empty!(jRoute.nodes)
             iRoute.demand += jRoute.demand
-            iRoute.cost += jRoute.cost - DCostNodes[(iNode.ID -1)] - DCostNodes[(jNode.ID-1)] #+ D[iNode.ID, jNode.ID]
+            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
 
 
 
