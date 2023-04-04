@@ -90,10 +90,15 @@ function read_data(filename)
     D= pairwise(Euclidean(), X, dims=2)
 
 #     DCostNodes= Dict{Int64,Float64}( nodes[i].ID => D[1,i] for i in 2:length(nodes))
-    DCostNodes= Dict{Int64,Float64}()
+#     DCostNodes= Dict{Int64,Float64}()
+    DCostNodes= Vector{Float64}()
     for i in 2:length(nodes)
-        DCostNodes[nodes[i].ID] = D[1,i]
+        push!(DCostNodes, D[1,i])
     end
+    DCostNodes=Tuple(DCostNodes)
+#     for i in 2:length(nodes)
+#
+#     end
     # Now we are going to define the array S, the savings of each pair of nodes. The savings are
     # defined as the difference between the distance between the nodes and the distance between the
     # depot and the nodes. The depot is the first node in the list of nodes.
@@ -175,7 +180,7 @@ end
 function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute, DCostNodes,S, D, best_sol,index1)
     vehCap= 100
 
-    for k in shuffled_list_knuth(length(OrderedEdges),index1)
+    for k = shuffled_list_knuth(length(OrderedEdges),index1)
 #         k+=rand((-5:5))
 #         if k<0:
 #             k=1
@@ -239,7 +244,7 @@ function CWS(solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRo
             # iRoute.nodes = vcat(iRoute.nodes, jRoute.nodes)
             empty!(jRoute.nodes)
             iRoute.demand += jRoute.demand
-            iRoute.cost += jRoute.cost - DCostNodes[iNode.ID ] - DCostNodes[jNode.ID] + D[iNode.ID, jNode.ID]
+            iRoute.cost += jRoute.cost - DCostNodes[(iNode.ID -1)] - DCostNodes[(jNode.ID-1)] #+ D[iNode.ID, jNode.ID]
 
 
 
@@ -409,13 +414,13 @@ function main(instanceName, index1)
 #    end
 #    println(best_sol_cost)
 end
-index1=rand(Geometric(0.3),100000)
+index1=Tuple(rand(Geometric(0.3),100000))
 # println(index1)
-for filename in filter(x -> occursin(r"\.txt$", x), readdir("data"))[6:15]
+for filename in filter(x -> occursin(r"\.txt$", x), readdir("data"))[1:1]
     
 
-    # println(filename)
-    #    @time main(filename,index1)
+    println(filename)
+       @time main(filename,index1)
 
    @profview main(filename,index1)
     readline()
