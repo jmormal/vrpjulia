@@ -197,7 +197,7 @@ function checkMergingConditions(iNode::Node, jNode::Node, iRoute::Route, jRoute:
 end
 
 
-function CWS(perm::Vector{Int32}, checkers::Vector{Bool},solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute:: Dict{Int64, Int64}, DCostNodes,S, D, best_sol,index1::NTuple{100000, Int64})
+function CWS(perm::Vector{Int32}, best_perm::Vector{Int32}, checkers::Vector{Bool},solution::Solution, nodes::Vector{Node}, OrderedEdges, DictNodeToRoute:: Dict{Int64, Int64}, DCostNodes,S, D, best_sol,index1::NTuple{100000, Int64})
     vehCap= 100
     perm = shuffled_list_knuth!(perm, length(OrderedEdges),index1)
     for i in 1:length(nodes)
@@ -278,13 +278,16 @@ function CWS(perm::Vector{Int32}, checkers::Vector{Bool},solution::Solution, nod
             solution.cost += solution.routes[i].cost
         end
     end
-#     if solution.cost<best_sol
-#         best_sol=solution.cost
-#
-#     end
-    bo=solution.cost<best_sol
-    best_sol=(1-bo)*best_sol+(bo)*solution.cost
-    return best_sol
+    if solution.cost<best_sol
+        best_sol=solution.cost
+        for i in eachindex(perm)
+            best_perm[i]=perm[i]
+        end
+    end
+#     bo=solution.cost<best_sol
+#     best_sol=(1-bo)*best_sol+(bo)*solution.cost
+
+    return best_sol, best_perm
 
 end
 
@@ -295,7 +298,7 @@ function main(instanceName, index1::NTuple{100000, Int64})
 
     fileName = "data/" * instanceName
     solution, nodes, OrderedEdges, DictNodeToRoute, DCostNodes,S ,D ,routes, cost = read_data(fileName)
-    num_routes=100000*4*3
+    num_routes=100000*2
     Edges=Vector{typeof(OrderedEdges)}(undef, 2000000)
 
     Solutions=Vector{Solution}(undef, num_routes)
@@ -312,9 +315,14 @@ function main(instanceName, index1::NTuple{100000, Int64})
 
 #     best_sol=Solutions[1]
     best_sol_cost=100000000
+    bestperm=copy(perm)
     for k in 1:num_routes
-
-        best_sol_cost=CWS(perm,checkers, solution, solution.nodes, OrderedEdges,
+#         perm.=bestperm
+        for i in eachindex(perm)
+            perm[i]=bestperm[i]
+        end
+        Solutions[k]=Solution(0,  deepcopy(routes), cost,deepcopy(nodes))
+        best_sol_cost,bestperm=CWS(perm, bestperm,checkers, solution, solution.nodes, OrderedEdges,
          DictNodeToRoute, DCostNodes,S,D,best_sol_cost  , index1)
 
          for i in 1:length(solution.nodes)-1
@@ -343,12 +351,12 @@ for filename in filter(x -> occursin(r"\.txt$", x), readdir("data"))[1:1]
        @time main(filename,index1)
        @time main(filename,index1)
 
-#     Profile.Allocs.clear()
-#
-#
-#     Profile.Allocs.@profile sample_rate=0.1 main(filename,index1)
-#     PProf.Allocs.pprof(from_c=false )
-#     readline()
+    Profile.Allocs.clear()
+
+
+    Profile.Allocs.@profile sample_rate=0.1 main(filename,index1)
+    PProf.Allocs.pprof(from_c=false )
+    readline()
     #
     @profview  main(filename,index1)
     readline()
