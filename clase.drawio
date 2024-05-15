@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-05-15T07:22:29.417Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" etag="0ectGtX_SNFa89o4-Z6n" version="24.4.0" type="github">
+<mxfile host="app.diagrams.net" modified="2024-05-15T07:23:31.846Z" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36" etag="54hxPKWoyfLMirar8l6G" version="24.4.0" type="github">
   <diagram name="Página-1" id="xFwdIDVOre-B4i89dgB8">
     <mxGraphModel dx="2269" dy="1331" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3300" pageHeight="4681" math="0" shadow="0">
       <root>
@@ -226,60 +226,6 @@
         </mxCell>
         <mxCell id="LieEV2MZe-DUKSbXCbdR-14" value="16" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
           <mxGeometry x="5050" y="510" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-28" value="1" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-29" target="LieEV2MZe-DUKSbXCbdR-37">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-29" value="10" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2030" y="990" width="70" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-30" value="7" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-33" target="LieEV2MZe-DUKSbXCbdR-41">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-31" value="3" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-33" target="LieEV2MZe-DUKSbXCbdR-37">
-          <mxGeometry x="0.1497" y="-35" relative="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-32" value="2" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-33" target="LieEV2MZe-DUKSbXCbdR-39">
-          <mxGeometry x="-0.5714" y="30" relative="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-33" value="11" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2030" y="1270" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-34" value="9" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-35" target="LieEV2MZe-DUKSbXCbdR-41">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-35" value="12" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2030" y="1530" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-36" value="6" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;fontColor=#3333FF;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-37" target="LieEV2MZe-DUKSbXCbdR-42">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-37" value="13" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2250" y="990" width="70" height="70" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-38" value="3" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;fontColor=#3333FF;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-39" target="LieEV2MZe-DUKSbXCbdR-42">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-39" value="14" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2250" y="1270" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-40" value="5" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;fontColor=#3333FF;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-41" target="LieEV2MZe-DUKSbXCbdR-42">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-41" value="15" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2250" y="1530" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-42" value="16" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fontSize=35;" vertex="1" parent="1">
-          <mxGeometry x="2510" y="1270" width="80" height="80" as="geometry" />
-        </mxCell>
-        <mxCell id="LieEV2MZe-DUKSbXCbdR-43" value="6" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.331;entryY=0.06;entryDx=0;entryDy=0;entryPerimeter=0;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-29" target="LieEV2MZe-DUKSbXCbdR-41">
-          <mxGeometry x="-0.7501" y="18" relative="1" as="geometry">
-            <mxPoint as="offset" />
-          </mxGeometry>
         </mxCell>
         <mxCell id="LieEV2MZe-DUKSbXCbdR-76" value="1" style="edgeStyle=none;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;fontSize=35;" edge="1" parent="1" source="LieEV2MZe-DUKSbXCbdR-77" target="LieEV2MZe-DUKSbXCbdR-85">
           <mxGeometry relative="1" as="geometry" />
